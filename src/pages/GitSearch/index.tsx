@@ -1,21 +1,19 @@
 import './styles.css';
 
-import ResultCard from 'components/ResultCard';
 import { useState } from 'react';
 import axios from 'axios';
+import ProfileCard from 'components/ProfileCard';
+import { Profile } from 'types/profile';
+import CardLoader from './CardLoader';
 
-type FormData = { cep: string };
+type FormData = { username: string };
 
-type Address = {
-  logradouro: string;
-  localidade: string;
-};
-
-const CepSearch = () => {
-  const [address, setAddress] = useState<Address>();
+const GitSearch = () => {
+  const [profile, setProfile] = useState<Profile>();
+  const [isLoading, setIsloading] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
-    cep: '',
+    username: '',
   });
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const name = event.target.name;
@@ -26,46 +24,49 @@ const CepSearch = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    setIsloading(true);
     axios
-      .get(`https://viacep.com.br/ws/${formData.cep}/json`)
+      .get(`https://api.github.com/users/${formData.username}`)
       .then((response) => {
-        setAddress(response.data);
+        setProfile(response.data);
         console.log(response.data);
       })
       .catch((error) => {
-        setAddress(undefined);
-        console.log(error);
+        setProfile(undefined);
+      })
+      .finally(() => {
+        setIsloading(false);
       });
   };
 
   return (
-    <div className="cep-search-container">
-      <h1 className="text-primary">Busca CEP</h1>
+    <div className="git-search-container">
       <div className="container search-container">
+        <h1>Encontre um perfil Github</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-container">
             <input
-              name="cep"
+              name="username"
               type="text"
-              value={formData.cep}
+              value={formData.username}
               className="search-input"
-              placeholder="CEP (somente números)"
+              placeholder="Usuário Github"
               onChange={handleChange}
             />
             <button type="submit" className="btn btn-primary search-button">
-              Buscar
+              Encontrar
             </button>
           </div>
         </form>
-        {address && (
-          <>
-            <ResultCard title="Logradouro" description={address.logradouro} />
-            <ResultCard title="Localidade" description={address.localidade} />
-          </>
-        )}
       </div>
+      {isLoading ? (
+        <CardLoader />
+      ) : (
+        profile && <ProfileCard profile={profile} />
+      )}
     </div>
   );
 };
 
-export default CepSearch;
+export default GitSearch;
